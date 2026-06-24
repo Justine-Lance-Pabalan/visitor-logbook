@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/visitor.dart';
-import '../data/visitor_data.dart';
+import '../data/database_helper.dart';
 
 class RegisterVisitorScreen extends StatefulWidget {
   const RegisterVisitorScreen({super.key});
@@ -19,10 +19,13 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
     text: "N/A",
   );
 
+  String _lastSrCode = '';
+
   String? selectedDepartment;
   String? selectedPurpose;
 
   final departments = [
+    "Guest/Visitor",
     "CAFAD",
     "CET",
     "CICS",
@@ -66,6 +69,30 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                   labelText: "SR Code",
                   border: OutlineInputBorder(),
                 ),
+                onChanged: (value) {
+                  final normalized = value.trim().toLowerCase();
+                  final isGuestVariant = normalized == "guest" ||
+                      normalized == "visitor" ||
+                      normalized == "guest/visitor" ||
+                      normalized == "guest visitor";
+                  final isTyping = value.length > _lastSrCode.length;
+
+                  if (isGuestVariant && isTyping && _srCodeController.text != "Guest/Visitor") {
+                    setState(() {
+                      _srCodeController.text = "Guest/Visitor";
+                      _srCodeController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: _srCodeController.text.length),
+                    );
+                    selectedDepartment = "Guest/Visitor";
+                  });
+                } else if (!isGuestVariant && selectedDepartment == "Guest/Visitor") {
+                  setState(() {
+                    selectedDepartment = null;
+                  });
+                }
+
+                _lastSrCode = value;
+              },
               ),
 
               const SizedBox(height: 15),
@@ -75,19 +102,21 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                   labelText: "Department",
                   border: OutlineInputBorder(),
                 ),
-
                 value: selectedDepartment,
-
                 items: departments.map((dept) {
                   return DropdownMenuItem(
                     value: dept,
                     child: Text(dept),
                   );
                 }).toList(),
-
                 onChanged: (value) {
                   setState(() {
                     selectedDepartment = value;
+                    if (value == "Guest/Visitor") {
+                      _srCodeController.text = "Guest/Visitor";
+                    } else if (_srCodeController.text == "Guest/Visitor") {
+                      _srCodeController.clear();
+                    }
                   });
                 },
               ),
@@ -153,10 +182,14 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                 child: ElevatedButton(
                   child: const Text("Register Visitor"),
 
-                  onPressed: () {
+                  onPressed: () async {
+                    final srCode = _srCodeController.text;
+                    final nameInput = _nameController.text;
+
+                    // Basic field validation
                     if (
-                      _nameController.text.isEmpty ||
-                      _srCodeController.text.isEmpty ||
+                      nameInput.isEmpty ||
+                      srCode.isEmpty ||
                       selectedDepartment == null ||
                       selectedPurpose == null ||
                       _propertyController.text.isEmpty ||
@@ -164,43 +197,58 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                       _otherPurposeController.text.isEmpty)
                     ) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Please complete all fields",
-                          ),
-                        ),
+                        const SnackBar(content: Text("Please complete all fields")),
                       );
-
                       return;
                     }
 
-                    visitors.add(
-                      Visitor(
-                        name: _nameController.text,
-                        srCode: _srCodeController.text,
-                        department: selectedDepartment!,
+                    // SR Code format validation (numbers and dash only)
+                    final srCodeRegex = RegExp(r'^[0-9\-]+$');
+                    if (srCode != "Guest/Visitor" && !srCodeRegex.hasMatch(srCode)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("SR Code must only contain numbers and dashes")),
+                      );
+                      return;
+                    }
 
+                    // Same-day duplicate check
+                    final existing = await DatabaseHelper.getVisitors();
+                    final today = DateTime.now();
+                    final duplicate = existing.any((v) =>
+                      v.srCode == srCode &&
+                      v.name.toLowerCase() == nameInput.toLowerCase() &&
+                      v.date.year == today.year &&
+                      v.date.month == today.month &&
+                      v.date.day == today.day,
+                    );
+
+                    if (duplicate) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("This visitor is already registered today")),
+                      );
+                      return;
+                    }
+
+                    await DatabaseHelper.insertVisitor(
+                      Visitor(
+                        name: nameInput,
+                        srCode: srCode,
+                        department: selectedDepartment!,
                         purpose: selectedPurpose == "Others"
                             ? _otherPurposeController.text
                             : selectedPurpose!,
-
                         propertyUsed: _propertyController.text,
-
                         date: DateTime.now(),
                         timeIn: DateTime.now(),
                       ),
                     );
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Visitor Registered",
-                        ),
-                      ),
-                    );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Visitor Registered")),
+                  );
 
-                    Navigator.pop(context);
-                  },
+                  Navigator.pop(context);
+                },
                 ),
               ),
             ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/visitor.dart';
-import '../data/visitor_data.dart';
+import '../data/database_helper.dart';
 
 String formatTime(DateTime dateTime) {
   return "${dateTime.hour}:${dateTime.minute.toString().padLeft(2,'0')}";
@@ -19,6 +19,7 @@ class ActiveVisitorsScreen extends StatefulWidget {
 
 class _ActiveVisitorsScreenState
     extends State<ActiveVisitorsScreen> {
+  List<Visitor> _visitors = [];
   String getStatus(Visitor visitor) {
     if (visitor.timeOut != null) {
       return "Completed";
@@ -30,6 +31,13 @@ class _ActiveVisitorsScreenState
       return "Property Returned";
     }
     return "Borrowing Property";
+  }
+
+  Future<void> loadVisitors() async {
+    final data = await DatabaseHelper.getVisitors();
+    setState(() {
+      _visitors = data;
+    });
   }
 
   void showAdminPin(
@@ -56,13 +64,12 @@ class _ActiveVisitorsScreenState
           TextButton(
             child:
                 const Text("Confirm"),
-            onPressed: () {
+            onPressed: () async {
               if (controller.text == "1234") {
                 Navigator.pop(context);
-                setState(() {
-                  visitor.timeOut =
-                      DateTime.now();
-                });
+                visitor.timeOut = DateTime.now();
+                await DatabaseHelper.updateVisitor(visitor);
+                await loadVisitors();
               } else {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context)
@@ -81,9 +88,15 @@ class _ActiveVisitorsScreenState
   }
 
   @override
+  void initState() {
+    super.initState();
+    loadVisitors();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final activeVisitors =
-        visitors.where(
+        _visitors.where(
           (v) => v.timeOut == null
         ).toList();
     return Scaffold(
@@ -158,22 +171,19 @@ class _ActiveVisitorsScreenState
                     const SizedBox(height:10),
                     Row(
                       children: [
-                        if(visitor.propertyUsed
-                            .toLowerCase() != "n/a"
-                            &&
-                            !visitor.propertyReturned)
+                        if(visitor.propertyUsed.toLowerCase() != "n/a" && !visitor.propertyReturned)
                         const SizedBox(width:10),
                         ElevatedButton(
                           child:
                             const Text(
                               "Time Out",
                             ),
-                          onPressed: () {
+                          onPressed: () async {
                             if(
                             visitor.propertyUsed.toLowerCase() == "n/a") {
-                              setState(() {
-                                visitor.timeOut = DateTime.now();
-                              });
+                              visitor.timeOut = DateTime.now();
+                              await DatabaseHelper.updateVisitor(visitor);
+                              await loadVisitors();
                             }
                             else {
                               showAdminPin(
