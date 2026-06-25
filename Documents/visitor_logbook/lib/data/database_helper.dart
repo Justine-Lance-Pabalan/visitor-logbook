@@ -18,7 +18,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE visitors(
@@ -34,6 +34,13 @@ class DatabaseHelper {
             propertyReturned INTEGER NOT NULL DEFAULT 0
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            "ALTER TABLE visitors ADD COLUMN pin TEXT NOT NULL DEFAULT '0000'",
+          );
+        }
       },
     );
   }

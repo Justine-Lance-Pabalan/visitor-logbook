@@ -7,6 +7,8 @@ class Visitor {
   final String purpose;
   final String propertyUsed;
 
+  String pin;
+
   DateTime date;
   DateTime timeIn;
   DateTime? timeOut;
@@ -21,6 +23,7 @@ class Visitor {
     required this.department,
     required this.purpose,
     required this.propertyUsed,
+    required this.pin,
     required this.date,
     required this.timeIn,
 
@@ -42,6 +45,7 @@ class Visitor {
       'department': department,
       'purpose': purpose,
       'propertyUsed': propertyUsed,
+      'pin': pin,
       'date': date.toIso8601String(),
       'timeIn': timeIn.toIso8601String(),
       'timeOut': timeOut?.toIso8601String(),
@@ -58,6 +62,7 @@ class Visitor {
       department: map['department'],
       purpose: map['purpose'],
       propertyUsed: map['propertyUsed'],
+      pin: map['pin'] ?? '0000',
       date: DateTime.parse(map['date']),
       timeIn: DateTime.parse(map['timeIn']),
       timeOut: map['timeOut'] != null
