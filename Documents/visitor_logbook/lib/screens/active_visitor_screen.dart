@@ -45,8 +45,6 @@ class _ActiveVisitorsScreenState extends State<ActiveVisitorsScreen> {
   }
 
   void _showTimeOutSuccess(BuildContext context) {
-    final navigatorState = Navigator.of(context);
-
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -54,7 +52,9 @@ class _ActiveVisitorsScreenState extends State<ActiveVisitorsScreen> {
     );
   
     Future.delayed(const Duration(seconds: 2), () {
-      navigatorState.pop();
+      if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+      }
     });
   }
 

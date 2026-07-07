@@ -61,15 +61,41 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
   }
 
   void _showSuccessDialog(String pin) {
+    final navigatorState = Navigator.of(context);
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (_) => _SuccessDialog(pin: pin),
-    );
+    ).then((_) {
+    if (mounted) {
+      navigatorState.pop();
+      }
+    });
 
     Future.delayed(const Duration(seconds: 4), () {
-      Navigator.pop(context); // closes dialog
-      Navigator.pop(context); // goes back to home
+      if (mounted) {
+      navigatorState.pop();
+      }
+    });
+  }  
+
+  void _showBorrowedDialog() {
+    final navigatorState = Navigator.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const _BorrowedDialog(),
+    ).then((_) {
+      if (mounted) {
+        navigatorState.pop();
+      }
+    });
+
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        navigatorState.pop();
+      }
     });
   }
 
@@ -256,8 +282,6 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                     const SizedBox(height: 30),
 
                     // ── Register Button ──
-                    // OutlinedButton wraps it so we get the red border
-                    // when not pressed, full red when pressed
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -317,6 +341,8 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                           }
 
                           final pin = _generatePin();
+                          final hasBorrowedProperty = 
+                            _propertyController.text.trim().toLowerCase() != "n/a";
 
                           await DatabaseHelper.insertVisitor(
                             Visitor(
@@ -333,7 +359,11 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                             ),
                           );
 
+                          if (hasBorrowedProperty) {
+                            _showBorrowedDialog(); // different dialog for borrowed equipment
+                          } else {
                           _showSuccessDialog(pin);
+                          }
                         },
                       ),
                     ),
@@ -580,6 +610,133 @@ class _SrCodeFormatter extends TextInputFormatter {
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+// ── Borrowed Equipment Dialog ──
+class _BorrowedDialog extends StatefulWidget {
+  const _BorrowedDialog();
+
+  @override
+  State<_BorrowedDialog> createState() => _BorrowedDialogState();
+}
+
+class _BorrowedDialogState extends State<_BorrowedDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF7B1113),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.inventory_2_rounded,
+                  color: Colors.white,
+                  size: 50,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'Registered!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF7B1113),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Visitor has been successfully\nlogged in the system.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Borrowed notice ──
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange, width: 1.5),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'You have borrowed equipment. Please return it and ask the admin to time you out.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Container(
+              height: 3,
+              width: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5A623),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+
+          ],
+        ),
+      ),
     );
   }
 }
