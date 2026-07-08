@@ -15,7 +15,6 @@ class Visitor {
 
   bool propertyReturned;
 
-
   Visitor({
     this.id,
     required this.name,
@@ -32,12 +31,10 @@ class Visitor {
     this.propertyReturned = false,
   });
 
-
   bool get hasProperty {
     return propertyUsed != "N/A";
   }
 
-  // Convert a Visitor into a Map for saving to database
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -53,7 +50,6 @@ class Visitor {
     };
   }
 
-  // Convert a Map from the database back into a Visitor
   factory Visitor.fromMap(Map<String, dynamic> map) {
     return Visitor(
       id: map['id'],

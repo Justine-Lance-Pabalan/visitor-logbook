@@ -191,7 +191,7 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                       decoration: _inputDecoration("SR Code (e.g. 22-12345)"),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
-                        _SrCodeFormatter(), // restricts typing to the format
+                        _SrCodeFormatter(),
                       ],
                       onChanged: (value) {
                         final normalized = value.trim().toLowerCase();
@@ -360,7 +360,7 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
                           );
 
                           if (hasBorrowedProperty) {
-                            _showBorrowedDialog(); // different dialog for borrowed equipment
+                            _showBorrowedDialog(); 
                           } else {
                           _showSuccessDialog(pin);
                           }
@@ -380,7 +380,7 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
   }
 }
 
-// ── Register Button — outline when idle, solid red when pressed ──
+// ── Register Button 
 class _RegisterButton extends StatefulWidget {
   final VoidCallback onPressed;
   const _RegisterButton({required this.onPressed});
@@ -394,8 +394,6 @@ class _RegisterButtonState extends State<_RegisterButton> {
 
   @override
   Widget build(BuildContext context) {
-    // When pressed: solid red background, white text
-    // When idle:    white background, red border, red text
     final isPressed = _isPressed;
 
     return GestureDetector(
@@ -438,7 +436,7 @@ class _RegisterButtonState extends State<_RegisterButton> {
   }
 }
 
-// ── Success Dialog with animated checkmark ──
+// ── Success Dialog
 class _SuccessDialog extends StatefulWidget {
   final String pin;
   const _SuccessDialog({required this.pin});
@@ -545,7 +543,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
                 ),
               ),
               child: Text(
-                widget.pin, // ← shows the PIN
+                widget.pin,
                 style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
@@ -590,18 +588,14 @@ class _SrCodeFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Always allow Guest/Visitor to pass through untouched
     if (newValue.text == "Guest/Visitor") return newValue;
 
     final digits = newValue.text.replaceAll('-', '');
 
-    // Max 7 digits total (2 + 5)
     if (digits.length > 7) return oldValue;
 
-    // Only allow numbers
     if (!RegExp(r'^[0-9]*$').hasMatch(digits)) return oldValue;
 
-    // Auto insert dash after 2 digits
     String formatted = digits;
     if (digits.length > 2) {
       formatted = '${digits.substring(0, 2)}-${digits.substring(2)}';
