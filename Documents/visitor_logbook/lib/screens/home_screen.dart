@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'register_visitor_screen.dart';
 import 'visitor_records_screen.dart';
 import 'active_visitor_screen.dart';
-
-// BSU colors 
-const bsuRed = Color(0xFF7B1113);
-const bsuGold = Color(0xFFF5A623);
-const bsuWhite = Colors.white;
+import '../widgets/pin_dialog.dart';
+import '../utils/colors.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,166 +27,189 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
       ),
 
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: Column(
+        children: [
+          // ── BSU Header Section ──
+          Container(
+            width: double.infinity,
+            color: bsuRed,
+            padding: const EdgeInsets.only(top: 10, bottom: 30),
+            child: Column(
+              children: [
+                // Logo
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/BatStateU-NEU-Logo.png', height: 100),
+                    const SizedBox(width: 16),
+                    Image.asset('assets/DTC.png', height: 100),
+                  ],
+                ),
 
-            // ── BSU Header Section ──
-            Container(
-              width: double.infinity,
-              color: bsuRed,
-              padding: const EdgeInsets.only(
-                top: 10,
-                bottom: 30,
+                const SizedBox(height: 12),
+
+                // University name
+                const Text(
+                  'DIGITAL TRANSFORMATION CENTER',
+                  style: TextStyle(
+                    color: bsuWhite,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 4),
+
+                // Tagline in gold
+                const Text(
+                  'Advancing AI, data science, and immersive technology through research, consultation, and collaborative learning experiences.',
+                  style: TextStyle(
+                    color: bsuGold,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          // ── Curved transition ──
+          Container(
+            height: 24,
+            decoration: const BoxDecoration(
+              color: bsuWhite,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
               ),
-              child: Column(
-                children: [
-                  // Logo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            ),
+          ),
+
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: SingleChildScrollView(
+                  child: Column(
                     children: [
-                      Image.asset(
-                        'assets/BatStateU-NEU-Logo.png',
-                        height: 100,
+                      // ── Subtitle ──
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Visitor Logbook System',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: bsuRed,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 16),
-                      Image.asset(
-                        'assets/DTC.png',
-                        height: 100,
+
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 30),
+                        child: Text(
+                          'Select an option to continue',
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                      ),
+
+                      // ── Buttons ──
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: [
+                            _HomeButton(
+                              label: 'Register Visitor',
+                              icon: Icons.person_add,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterVisitorScreen(),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            _HomeButton(
+                              label: 'Active Visitors',
+                              icon: Icons.people,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ActiveVisitorsScreen(),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            _HomeButton(
+                              label: 'Visitor History',
+                              icon: Icons.history,
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => PinDialog(
+                                    title: "Admin Access",
+                                    subtitle:
+                                        "Enter admin PIN to view visitor history.",
+                                    onConfirm: (entered) async {
+                                      if (entered == "1234") {
+                                        Navigator.pop(context);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const VisitorRecordsScreen(),
+                                          ),
+                                        );
+                                      } else {
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text("Incorrect PIN."),
+                                            backgroundColor: bsuRed,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            // Footer
+                            const Text(
+                              'Service • Excellence • Virtue',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                letterSpacing: 1.2,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // University name
-                  const Text(
-                    'DIGITAL TRANSFORMATION CENTER',
-                    style: TextStyle(
-                      color: bsuWhite,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // Tagline in gold
-                  const Text(
-                    'Advancing AI, data science, and immersive technology through research, consultation, and collaborative learning experiences.',
-                    style: TextStyle(
-                      color: bsuGold,
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Curved transition ──
-            Container(
-              height: 24,
-              decoration: const BoxDecoration(
-                color: bsuWhite,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
                 ),
               ),
             ),
-
-            // ── Subtitle ──
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text(
-                'Visitor Logbook System',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: bsuRed,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-
-            const Padding(
-              padding: EdgeInsets.only(bottom: 30),
-              child: Text(
-                'Select an option to continue',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-
-            // ── Buttons ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-
-                  _HomeButton(
-                    label: 'Register Visitor',
-                    icon: Icons.person_add,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RegisterVisitorScreen(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _HomeButton(
-                    label: 'Active Visitors',
-                    icon: Icons.people,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ActiveVisitorsScreen(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _HomeButton(
-                    label: 'Visitor History',
-                    icon: Icons.history,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const VisitorRecordsScreen(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Footer
-                  const Text(
-                    'Service • Excellence • Virtue',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      letterSpacing: 1.2,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

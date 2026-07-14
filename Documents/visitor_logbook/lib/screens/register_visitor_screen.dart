@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import '../models/visitor.dart';
-import '../data/database_helper.dart';
-import 'package:flutter/services.dart';
-import 'dart:math';
-
-const bsuRed = Color(0xFF7B1113);
-const bsuGold = Color(0xFFF5A623);
-const bsuWhite = Colors.white;
+import '../data/api_service.dart';
+import '../widgets/bsu_header.dart';
+import '../widgets/success_dialog.dart';
+import '../utils/colors.dart';
+import '../utils/sr_code_formatter.dart';
+import '../widgets/register_button.dart';
 
 class RegisterVisitorScreen extends StatefulWidget {
   const RegisterVisitorScreen({super.key});
 
   @override
-  State<RegisterVisitorScreen> createState() =>
-      _RegisterVisitorScreenState();
+  State<RegisterVisitorScreen> createState() => _RegisterVisitorScreenState();
 }
 
 class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
@@ -26,13 +24,7 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
   String? selectedDepartment;
   String? selectedPurpose;
 
-  final departments = [
-    "Guest/Visitor",
-    "CAFAD",
-    "CET",
-    "CICS",
-    "COE",
-  ];
+  final departments = ["Guest/Visitor", "CAFAD", "CET", "CICS", "COE"];
 
   final purposes = [
     "Meeting",
@@ -46,9 +38,7 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: bsuRed),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: bsuRed, width: 2),
@@ -65,43 +55,94 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _SuccessDialog(pin: pin),
+      builder: (_) => SuccessDialog(
+        icon: Icons.check_rounded,
+        title: 'Registered!',
+        subtitle: 'Visitor has been successfully\nlogged in the system.',
+        extra: Column(
+          children: [
+            const Text(
+              'Your Time-Out PIN',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              decoration: BoxDecoration(
+                color: bsuRed.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: bsuRed, width: 2),
+              ),
+              child: Text(
+                pin,
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: bsuRed,
+                  letterSpacing: 12,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Remember this PIN to time out.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
     ).then((_) {
-    if (mounted) {
-      navigatorState.pop();
-      }
+      if (mounted) navigatorState.pop();
     });
-
     Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-      navigatorState.pop();
-      }
-    });
-  }  
-
-  void _showBorrowedDialog() {
-    final navigatorState = Navigator.of(context);
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => const _BorrowedDialog(),
-    ).then((_) {
-      if (mounted) {
-        navigatorState.pop();
-      }
-    });
-
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        navigatorState.pop();
-      }
+      if (mounted) navigatorState.pop();
     });
   }
 
-  String _generatePin() {
-    final random = Random();
-    return (1000 + random.nextInt(9000)).toString();
+  void _showBorrowedDialog() {
+    final navigatorState = Navigator.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => SuccessDialog(
+        icon: Icons.inventory_2_rounded,
+        title: 'Registered!',
+        subtitle: 'Visitor has been successfully\nlogged in the system.',
+        extra: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange, width: 1.5),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.orange, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'You have borrowed equipment. Please return it and ask the admin to time you out.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      if (mounted) navigatorState.pop();
+    });
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) navigatorState.pop();
+    });
   }
 
   @override
@@ -115,261 +156,222 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
         iconTheme: const IconThemeData(color: bsuWhite),
         title: const Text(
           'Register Visitor',
-          style: TextStyle(
-            color: bsuWhite,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: bsuWhite, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
 
       body: Column(
         children: [
+          //Header
+          BsuHeader(subtitle: 'Fill in the visitor details below'),
 
-          // ── Red top banner ──
-          Container(
-            width: double.infinity,
-            color: bsuRed,
-            padding: const EdgeInsets.only(bottom: 20),
-            child: const Center(
-              child: Text(
-                'Fill in the visitor details below',
-                style: TextStyle(
-                  color: bsuWhite,
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Curved transition ──
-          Container(
-            height: 24,
-            decoration: const BoxDecoration(
-              color: bsuWhite,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-            ),
-          ),
-
-          // ── Form ──
+          //Forms
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Visitor Information',
-                      style: TextStyle(
-                        color: bsuRed,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-
-                    const Divider(color: bsuGold, thickness: 2),
-
-                    const SizedBox(height: 12),
-
-                    TextField(
-                      controller: _nameController,
-                      decoration: _inputDecoration("Name"),
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    TextField(
-                      controller: _srCodeController,
-                      decoration: _inputDecoration("SR Code (e.g. 22-12345)"),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        _SrCodeFormatter(),
-                      ],
-                      onChanged: (value) {
-                        final normalized = value.trim().toLowerCase();
-                        final isGuestVariant = normalized == "guest" ||
-                            normalized == "visitor" ||
-                            normalized == "guest/visitor" ||
-                            normalized == "guest visitor";
-                        final isTyping = value.length > _lastSrCode.length;
-
-                        if (isGuestVariant && isTyping &&
-                            _srCodeController.text != "Guest/Visitor") {
-                          setState(() {
-                            _srCodeController.text = "Guest/Visitor";
-                            _srCodeController.selection =
-                                TextSelection.fromPosition(
-                              TextPosition(
-                                  offset: _srCodeController.text.length),
-                            );
-                            selectedDepartment = "Guest/Visitor";
-                          });
-                        } else if (!isGuestVariant &&
-                            selectedDepartment == "Guest/Visitor") {
-                          setState(() {
-                            selectedDepartment = null;
-                          });
-                        }
-                        _lastSrCode = value;
-                      },
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    DropdownButtonFormField<String>(
-                      decoration: _inputDecoration("Department"),
-                      value: selectedDepartment,
-                      items: departments.map((dept) {
-                        return DropdownMenuItem(
-                          value: dept,
-                          child: Text(dept),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedDepartment = value;
-                          if (value == "Guest/Visitor") {
-                            _srCodeController.text = "Guest/Visitor";
-                          } else if (_srCodeController.text == "Guest/Visitor") {
-                            _srCodeController.clear();
-                          }
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    DropdownButtonFormField<String>(
-                      decoration: _inputDecoration("Purpose of Visit"),
-                      value: selectedPurpose,
-                      items: purposes.map((purpose) {
-                        return DropdownMenuItem(
-                          value: purpose,
-                          child: Text(purpose),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedPurpose = value;
-                        });
-                      },
-                    ),
-
-                    if (selectedPurpose == "Others")
-                      Padding(
-                        padding: const EdgeInsets.only(top: 15),
-                        child: TextField(
-                          controller: _otherPurposeController,
-                          decoration: _inputDecoration("Specify Purpose"),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Visitor Information',
+                        style: TextStyle(
+                          color: bsuRed,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
                         ),
                       ),
-
-                    const SizedBox(height: 15),
-
-                    TextField(
-                      controller: _propertyController,
-                      decoration: _inputDecoration("Property Used"),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // ── Register Button ──
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: _RegisterButton(
-                        onPressed: () async {
-                          final srCode = _srCodeController.text;
-                          final nameInput = _nameController.text;
-
-                          if (nameInput.isEmpty ||
-                              srCode.isEmpty ||
-                              selectedDepartment == null ||
-                              selectedPurpose == null ||
-                              _propertyController.text.isEmpty ||
-                              (selectedPurpose == "Others" &&
-                                  _otherPurposeController.text.isEmpty)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please complete all fields"),
-                                backgroundColor: bsuRed,
-                              ),
-                            );
-                            return;
+                      const Divider(color: bsuGold, thickness: 2),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _nameController,
+                        decoration: _inputDecoration("Name"),
+                      ),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: _srCodeController,
+                        decoration: _inputDecoration("SR Code (e.g. 22-12345)"),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [SrCodeFormatter()],
+                        onChanged: (value) {
+                          final normalized = value.trim().toLowerCase();
+                          final isGuestVariant =
+                              normalized == "guest" ||
+                              normalized == "visitor" ||
+                              normalized == "guest/visitor" ||
+                              normalized == "guest visitor";
+                          final isTyping = value.length > _lastSrCode.length;
+                          if (isGuestVariant &&
+                              isTyping &&
+                              _srCodeController.text != "Guest/Visitor") {
+                            setState(() {
+                              _srCodeController.text = "Guest/Visitor";
+                              _srCodeController.selection =
+                                  TextSelection.fromPosition(
+                                    TextPosition(
+                                      offset: _srCodeController.text.length,
+                                    ),
+                                  );
+                              selectedDepartment = "Guest/Visitor";
+                            });
+                          } else if (!isGuestVariant &&
+                              selectedDepartment == "Guest/Visitor") {
+                            setState(() {
+                              selectedDepartment = null;
+                            });
                           }
-
-                          final srCodeRegex = RegExp(r'^\d{2}-\d{5}$');
-                          if (srCode != "Guest/Visitor" &&
-                              !srCodeRegex.hasMatch(srCode)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    "SR Code must only contain numbers and dashes"),
-                                backgroundColor: bsuRed,
-                              ),
-                            );
-                            return;
-                          }
-
-                          final existing = await DatabaseHelper.getVisitors();
-                          final today = DateTime.now();
-                          final duplicate = existing.any((v) =>
-                              v.srCode == srCode &&
-                              v.name.toLowerCase() ==
-                                  nameInput.toLowerCase() &&
-                              v.date.year == today.year &&
-                              v.date.month == today.month &&
-                              v.date.day == today.day);
-
-                          if (duplicate) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    "This visitor is already registered today"),
-                                backgroundColor: bsuRed,
-                              ),
-                            );
-                            return;
-                          }
-
-                          final pin = _generatePin();
-                          final hasBorrowedProperty = 
-                            _propertyController.text.trim().toLowerCase() != "n/a";
-
-                          await DatabaseHelper.insertVisitor(
-                            Visitor(
-                              name: nameInput,
-                              srCode: srCode,
-                              department: selectedDepartment!,
-                              purpose: selectedPurpose == "Others"
-                                  ? _otherPurposeController.text
-                                  : selectedPurpose!,
-                              propertyUsed: _propertyController.text,
-                              pin: pin,
-                              date: DateTime.now(),
-                              timeIn: DateTime.now(),
-                            ),
-                          );
-
-                          if (hasBorrowedProperty) {
-                            _showBorrowedDialog(); 
-                          } else {
-                          _showSuccessDialog(pin);
-                          }
+                          _lastSrCode = value;
                         },
                       ),
-                    ),
+                      const SizedBox(height: 15),
+                      DropdownButtonFormField<String>(
+                        decoration: _inputDecoration("Department"),
+                        value: selectedDepartment,
+                        items: departments.map((dept) {
+                          return DropdownMenuItem(
+                            value: dept,
+                            child: Text(dept),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedDepartment = value;
+                            if (value == "Guest/Visitor") {
+                              _srCodeController.text = "Guest/Visitor";
+                            } else if (_srCodeController.text ==
+                                "Guest/Visitor") {
+                              _srCodeController.clear();
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      DropdownButtonFormField<String>(
+                        decoration: _inputDecoration("Purpose of Visit"),
+                        value: selectedPurpose,
+                        items: purposes.map((purpose) {
+                          return DropdownMenuItem(
+                            value: purpose,
+                            child: Text(purpose),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedPurpose = value;
+                          });
+                        },
+                      ),
+                      if (selectedPurpose == "Others")
+                        Padding(
+                          padding: const EdgeInsets.only(top: 15),
+                          child: TextField(
+                            controller: _otherPurposeController,
+                            decoration: _inputDecoration("Specify Purpose"),
+                          ),
+                        ),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: _propertyController,
+                        decoration: _inputDecoration("Property Used"),
+                      ),
+                      const SizedBox(height: 30),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: RegisterButton(
+                          onPressed: () async {
+                            final srCode = _srCodeController.text;
+                            final nameInput = _nameController.text;
 
-                    const SizedBox(height: 30),
-                  ],
+                            if (nameInput.isEmpty ||
+                                srCode.isEmpty ||
+                                selectedDepartment == null ||
+                                selectedPurpose == null ||
+                                _propertyController.text.isEmpty ||
+                                (selectedPurpose == "Others" &&
+                                    _otherPurposeController.text.isEmpty)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Please complete all fields"),
+                                  backgroundColor: bsuRed,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final srCodeRegex = RegExp(r'^\d{2}-\d{5}$');
+                            if (srCode != "Guest/Visitor" &&
+                                !srCodeRegex.hasMatch(srCode)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "SR Code must only contain numbers and dashes",
+                                  ),
+                                  backgroundColor: bsuRed,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final existing = await ApiService.getVisitors();
+                            final today = DateTime.now();
+                            final duplicate = existing.any(
+                              (v) =>
+                                  v.srCode == srCode &&
+                                  v.name.toLowerCase() ==
+                                      nameInput.toLowerCase() &&
+                                  v.date.year == today.year &&
+                                  v.date.month == today.month &&
+                                  v.date.day == today.day,
+                            );
+
+                            if (duplicate) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "This visitor is already registered today",
+                                  ),
+                                  backgroundColor: bsuRed,
+                                ),
+                              );
+                              return;
+                            }
+
+                            final newVisitor = await ApiService.insertVisitor(
+                              Visitor(
+                                name: nameInput,
+                                srCode: srCode,
+                                department: selectedDepartment!,
+                                purpose: selectedPurpose == "Others"
+                                    ? _otherPurposeController.text
+                                    : selectedPurpose!,
+                                propertyUsed: _propertyController.text,
+                                pin: '0000',
+                                date: DateTime.now().toUtc(),
+                                timeIn: DateTime.now().toUtc(),
+                              ),
+                            );
+
+                            final hasBorrowedProperty =
+                                _propertyController.text.trim().toLowerCase() !=
+                                "n/a";
+
+                            if (hasBorrowedProperty) {
+                              _showBorrowedDialog();
+                            } else {
+                              _showSuccessDialog(newVisitor.pin);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -379,359 +381,3 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen> {
     );
   }
 }
-
-// ── Register Button 
-class _RegisterButton extends StatefulWidget {
-  final VoidCallback onPressed;
-  const _RegisterButton({required this.onPressed});
-
-  @override
-  State<_RegisterButton> createState() => _RegisterButtonState();
-}
-
-class _RegisterButtonState extends State<_RegisterButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isPressed = _isPressed;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onPressed();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: isPressed ? bsuRed : bsuWhite,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: bsuRed, width: 2),
-        ),
-        alignment: Alignment.center,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.how_to_reg,
-              color: isPressed ? bsuWhite : bsuRed,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 150),
-              style: TextStyle(
-                color: isPressed ? bsuWhite : bsuRed,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              child: const Text('Register Visitor'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Success Dialog
-class _SuccessDialog extends StatefulWidget {
-  final String pin;
-  const _SuccessDialog({required this.pin});
-
-  @override
-  State<_SuccessDialog> createState() => _SuccessDialogState();
-}
-
-class _SuccessDialogState extends State<_SuccessDialog>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _scaleAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    );
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-
-            ScaleTransition(
-              scale: _scaleAnimation,
-              child: Container(
-                width: 90,
-                height: 90,
-                decoration: const BoxDecoration(
-                  color: bsuRed,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: bsuWhite,
-                  size: 55,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              'Registered!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: bsuRed,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Visitor has been successfully\nlogged in the system.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── PIN display ──
-            const Text(
-              'Your Time-Out PIN',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32, vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF7B1113).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF7B1113),
-                  width: 2,
-                ),
-              ),
-              child: Text(
-                widget.pin,
-                style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF7B1113),
-                  letterSpacing: 12,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Remember this PIN to time out.',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              height: 3,
-              width: 60,
-              decoration: BoxDecoration(
-                color: bsuGold,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SrCodeFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (newValue.text == "Guest/Visitor") return newValue;
-
-    final digits = newValue.text.replaceAll('-', '');
-
-    if (digits.length > 7) return oldValue;
-
-    if (!RegExp(r'^[0-9]*$').hasMatch(digits)) return oldValue;
-
-    String formatted = digits;
-    if (digits.length > 2) {
-      formatted = '${digits.substring(0, 2)}-${digits.substring(2)}';
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}
-
-// ── Borrowed Equipment Dialog ──
-class _BorrowedDialog extends StatefulWidget {
-  const _BorrowedDialog();
-
-  @override
-  State<_BorrowedDialog> createState() => _BorrowedDialogState();
-}
-
-class _BorrowedDialogState extends State<_BorrowedDialog>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _scaleAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    );
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-
-            ScaleTransition(
-              scale: _scaleAnimation,
-              child: Container(
-                width: 90,
-                height: 90,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF7B1113),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.inventory_2_rounded,
-                  color: Colors.white,
-                  size: 50,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              'Registered!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7B1113),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Visitor has been successfully\nlogged in the system.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Borrowed notice ──
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange, width: 1.5),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.orange, size: 20),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'You have borrowed equipment. Please return it and ask the admin to time you out.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              height: 3,
-              width: 60,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5A623),
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-
-          ],
-        ),
-      ),
-    );
-  }
-}
-
