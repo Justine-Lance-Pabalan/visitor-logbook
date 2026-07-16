@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/visitor.dart';
 
-const String baseUrl = "http://192.168.103.130:8000";
+const String baseUrl = "http://192.168.103.114:8000";
 
 class ApiService {
   // GET all visitors
